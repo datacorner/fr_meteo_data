@@ -3,6 +3,8 @@ import numpy as np
 import requests
 import lxml.html as lh
 from datetime import datetime, timedelta
+import sys
+import getopt
 
 urlbase= "https://www.historique-meteo.net/france"
 labels = ['TempÃ©rature maximale',
@@ -59,10 +61,11 @@ def getValueFromXPath(doc, _xpath):
   except:
     return "Error"
 
+# Get the XPath infor for the XPath reference
 def getXPath(_rowidx = 1, _colidx = 4):
   return '//*[@id="content"]/div/div/div[1]/table/tbody/tr['+  str(_rowidx) + ']/td['+  str(_colidx) + ']'
 
-# Get one feature into the web page
+# Get one feature into the web page by XPath search
 def getOneMeteoFeature(_doc, _table, _feature):
   featureValue = ""
   row = 1
@@ -84,22 +87,24 @@ def get1RegionMeteoByDay(_region, _day):
   doc = lh.fromstring(page.content)
   table = 2
   dataset = pd.DataFrame(columns=labels, index=[_region])
+  # Loop with all the required labels to grab their data
   for label in labels:
     val = getOneMeteoFeature(doc, table, label)
     dataset[label][_region] = getValue(val)
   return dataset
 
-# Return the meteo data for 1 day / all region
+# Return the meteo data for 1 day for all region
+# _day : day to retrieve meteo (format YYYY/MM/DD)
 def getAllRegionByDay(_day):
   all_day_dataset = pd.DataFrame()
-  # go through all regions
-  print ("  - Regions: ", end='')
+  print (f"Grab Meteo Data for {_day}")
+  # Loop through all regions and get their meteo data per day
   for region in regions:
     print (".", end='')
     dataframe_region = get1RegionMeteoByDay(region, _day)
     all_day_dataset = pd.concat([all_day_dataset, dataframe_region])
   print ("")
-  # reformat dataset
+  # reformat dataset columns names
   all_day_dataset.columns = ['TempMax_Deg',
                             'TempMin_Deg',
                             'Wind_kmh',
@@ -110,20 +115,50 @@ def getAllRegionByDay(_day):
   all_day_dataset['day'] = _day
   return all_day_dataset
 
-def GetMonthData(month):
-  current_day = datetime.strptime(month + "/01", "%Y/%m/%d")
-  current_month = current_day.month
-  ds_month = pd.DataFrame()
-  end_of_month = False
+def GetMeteoData(_start, _End, _Folder):
+    ds = pd.DataFrame()
+    end_of_loop = False
+    
+    # Convert in datetime
+    start = datetime.strptime(_start, "%Y/%m/%d")
+    end = datetime.strptime(_End, "%Y/%m/%d")
+    filename = "MeteoFR_" + _start.replace('/', '-') + "_" + _End.replace('/', '-') + ".csv"
+    
+    # Loop from start date to end
+    while (start <= end):
+        ds_one_day = getAllRegionByDay(start.strftime("%Y/%m/%d"))
+        ds = pd.concat([ds, ds_one_day])
+        start = start + timedelta(days=1)
+    
+    print (f"Store results in {_Folder + filename}")
+    ds.to_csv(_Folder + filename)
+    
+# Main function
+def main():
+    # Manage arguments
+    starDate, endDate, targetFolder = '', '', ''
+    try:
+        argv = sys.argv[1:]
+        print(argv)
+        opts, args = getopt.getopt(argv , "s:e:f:")
+    except getopt.GetoptError:
+         print ('Error. Usage is GetFRMeteoData.py -s <Start Date> -e <End Date> -f <Target Folder>')
+         sys.exit(2)
+    for opt, arg in opts:
+       if opt == '-h':
+           print ('Usage is GetFRMeteoData.py -s <Start Date> -e <End Date> -f <Target Folder>')
+       elif opt in ["-s"]:
+           starDate = arg.strip()
+       elif opt in ["-e"]:
+           endDate = arg.strip()
+       elif opt in ["-f"]:
+           targetFolder = arg.strip()
+    print (f"Starting Date: <{starDate}>")
+    print (f"End Date Date: <{endDate}>")
+    print (f"Target Folder: <{targetFolder}>")
 
-  while not end_of_month:
-    if (current_day.month != current_month):
-      end_of_month = True
-    else:
-      # Grab meteo information for that day
-      day = current_day.strftime("%Y/%m/%d")
-      print("> Day:", day)
-      ds_one_day = getAllRegionByDay(day)
-      ds_month = pd.concat([ds_month, ds_one_day])
-    current_day = current_day + timedelta(days=1)
-  ds_month.to_csv('./data/By Month (old FR regions)/' + month.replace('/', '-') + '.csv')
+    # Launch Meteo gathering
+    GetMeteoData(starDate, endDate, targetFolder)
+
+if __name__ == "__main__":
+    main()
