@@ -1,8 +1,11 @@
 # Get Meteo Data
 
 ## Requirements
-Python 3.7  
-Internet Access
+If you want to use the program you'll need:  
+* Python 3.7  
+* Internet Access  
+
+And if you don't want to use it, so ... just download the data in the /data directory ;-)
 
 ## Description
 This project aims to retreive all the historical data between two dates. The result is copied in a csv file in the folder specified. Currently the program only grab data from internet (via https://www.historique-meteo.net/france) for France by using scraping methods. However it can be extended to get meteo informations from other countries as the web site manage many countries. 
@@ -35,4 +38,5 @@ The result is stored in a csv file (in the input folder) with that format:
 * CloudCoverage_percent: Cloud coverage (%)  
 * Dayduration_hour: Day/sun duration (min)  
 * region: Region (France new breakdown)  
-* day: Day in format YYYY/MM/DD  
+* day: Day in format YYYY/MM/DD 
+
