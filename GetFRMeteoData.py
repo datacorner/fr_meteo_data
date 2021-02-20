@@ -116,7 +116,6 @@ def getAllRegionByDay(_day):
     #print (".", end='')
     dataframe_region = get1RegionMeteoByDay(region, _day)
     all_day_dataset = pd.concat([all_day_dataset, dataframe_region])
-  print ("")
   # reformat dataset columns names
   all_day_dataset.columns = ['TempMax_Deg',
                             'TempMin_Deg',
