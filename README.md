@@ -29,14 +29,14 @@ Here are the input parameter description:
 ## Result
 The result is stored in a csv file (in the input folder) with that format:  
 
-* Index: Row index (concat of Region and day)  
-* TempMax_Deg: Maximum Temperature of the day in Celcius degree  
-* TempMin_Deg: Minimum Temperature of the day in Celcius degree  
-* Wind_kmh: Wind speed (km/h)  
-* Wet_percent: Wet in (%)  
-* Visibility_km: Visibility (km)  
-* CloudCoverage_percent: Cloud coverage (%)  
-* Dayduration_hour: Day/sun duration (min)  
-* region: Region (France new breakdown)  
-* day: Day in format YYYY/MM/DD 
+* <B>Index:</b> Row index (concat of Region and day)  
+* <B>TempMax_Deg:</b> Maximum Temperature of the day in Celcius degree  
+* <B>TempMin_Deg:</b> Minimum Temperature of the day in Celcius degree  
+* <B>Wind_kmh:</b> Wind speed (km/h)  
+* <B>Wet_percent:</b> Wet in (%)  
+* <B>Visibility_km:</b> Visibility (km)  
+* <B>CloudCoverage_percent:</b> Cloud coverage (%)  
+* <B>Dayduration_hour:</b> Day/sun duration (min)  
+* <B>region:</b> Region (France new breakdown)  
+* <B>day:</b> Day in format YYYY/MM/DD 
 
