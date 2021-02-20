@@ -70,7 +70,7 @@ def getValueFromXPath(doc, _xpath):
     myval = value[0].text_content().strip()
     return myval
   except:
-    return "Error"
+    return np.nan
 
 # Get the XPath infor for the XPath reference
 def getXPath(_rowidx = 1, _colidx = 4):
@@ -189,7 +189,7 @@ def convertRegionData(dataset):
                             'Visibility_km',
                             'CloudCoverage_percent']
     for label in ColumlToFloatConvert:
-        dataset[label] = dataset[label].astype(float)
+        dataset[label] = dataset[label].astype(float, errors='ignore')
     
     dataset['Dayduration_Min'] = dataset['Dayduration_hour'].apply(convTimeInMinute)
     
@@ -223,8 +223,11 @@ def main():
 
     # Launch Meteo gathering
     filename, ds = GetMeteoData(starDate, endDate, targetFolder)
-
-    ds = convertRegionData(ds)
+    
+    try:
+        ds = convertRegionData(ds)
+    except:
+        print("Impossible to convert dataset into new French Region.")
     print (f"Store results in {targetFolder + filename}")
     ds.to_csv(targetFolder + filename)
 
