@@ -111,11 +111,16 @@ def get1RegionMeteoByDay(_region, _day):
 def getAllRegionByDay(_day):
   all_day_dataset = pd.DataFrame()
   print (f"Grab Meteo Data for {_day}")
+  
   # Loop through all regions and get their meteo data per day
   for region in regions:
     #print (".", end='')
-    dataframe_region = get1RegionMeteoByDay(region, _day)
-    all_day_dataset = pd.concat([all_day_dataset, dataframe_region])
+    try:
+        dataframe_region = get1RegionMeteoByDay(region, _day)
+        all_day_dataset = pd.concat([all_day_dataset, dataframe_region])
+    except:
+        print(f'Error while retreiving data for {region}, day {_day} | ', sys.exc_info()[0])    
+    
   # reformat dataset columns names
   all_day_dataset.columns = ['TempMax_Deg',
                             'TempMin_Deg',
