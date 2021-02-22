@@ -153,12 +153,12 @@ def GetMeteoData(_start, _End, _Folder):
 # return the number of minutes in a time
 def convTimeInMinute(_time):
   time = datetime.strptime(str(_time), "%H:%M:%S")
-  return time.hour * 60 + time.minute
+  return float(time.hour * 60 + time.minute)
 
 # Convert Data to new regions
 def convertRegionData(dataset):
     print ("Convert French Region with new ones")
-
+    print ("convertRegionData> Columns to convert:", dataset.columns)
     # Effectively do the region mapping
     dataset['region'] = dataset['region'].map({'ile-de-france' : 'Île-de-France',
                                                      'limousin' : 'Nouvelle-Aquitaine',
@@ -196,8 +196,11 @@ def convertRegionData(dataset):
     for label in ColumlToFloatConvert:
         dataset[label] = dataset[label].astype(float, errors='ignore')
     
+    print ("convertRegionData> Columns converted:", dataset.columns)
+    
     dataset['Dayduration_Min'] = dataset['Dayduration_hour'].apply(convTimeInMinute)
     
+    print ("convertRegionData> Group old region and mean data")
     # Now need to group the identical days (coming from the same region) to ensure no duplicates
     dataset = dataset.groupby(['region', 'day'], dropna=True).mean()
     
