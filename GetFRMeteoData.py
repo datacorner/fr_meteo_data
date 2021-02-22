@@ -155,10 +155,18 @@ def convTimeInMinute(_time):
   time = datetime.strptime(str(_time), "%H:%M:%S")
   return float(time.hour * 60 + time.minute)
 
+# convert float and replace no numerical data by nan
+def defaultFloat(val):
+    if str(val).isnumeric():
+        return float(val)
+    else:
+        return np.nan
+
 # Convert Data to new regions
 def convertRegionData(dataset):
     print ("Convert French Region with new ones")
     print ("convertRegionData> Columns to convert:", dataset.columns)
+    
     # Effectively do the region mapping
     dataset['region'] = dataset['region'].map({'ile-de-france' : 'Île-de-France',
                                                      'limousin' : 'Nouvelle-Aquitaine',
@@ -194,15 +202,17 @@ def convertRegionData(dataset):
                             'Visibility_km',
                             'CloudCoverage_percent']
     for label in ColumlToFloatConvert:
-        dataset[label] = dataset[label].astype(float, errors='ignore')
-    
-    print ("convertRegionData> Columns converted:", dataset.columns)
+        dataset[label] = [ defaultFloat(val) for val in dataset[label] ]
+        #dataset[label] = dataset[label].astype(float, errors='ignore')
     
     dataset['Dayduration_Min'] = dataset['Dayduration_hour'].apply(convTimeInMinute)
     
     print ("convertRegionData> Group old region and mean data")
+    print ("convertRegionData> Columns converted before grouping:", dataset.columns)
     # Now need to group the identical days (coming from the same region) to ensure no duplicates
     dataset = dataset.groupby(['region', 'day'], dropna=True).mean()
+    
+    print ("convertRegionData> Columns converted after grouping:", dataset.columns)
     
     return dataset
 
@@ -231,12 +241,15 @@ def main():
 
     # Launch Meteo gathering
     filename, ds = GetMeteoData(starDate, endDate, targetFolder)
+    ds.to_csv(targetFolder + "oldReg_" + filename)
     
     try:
         ds = convertRegionData(ds)
     except:
         print("Impossible to convert dataset into new French Region.")
     print (f"Store results in {targetFolder + filename}")
+    print ("Main()> Columns to write:", ds.columns)
+    
     ds.to_csv(targetFolder + filename)
 
 if __name__ == "__main__":
