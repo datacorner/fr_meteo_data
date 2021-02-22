@@ -5,6 +5,7 @@ import lxml.html as lh
 from datetime import datetime, timedelta
 import sys
 import getopt
+import locale
 
 urlbase= "https://www.historique-meteo.net/france"
 
@@ -156,10 +157,13 @@ def convTimeInMinute(_time):
   return float(time.hour * 60 + time.minute)
 
 # convert float and replace no numerical data by nan
+# take care to convert by using locale (point or comma)
 def defaultFloat(val):
+    from tornado.test import locale_test
     if str(val).isnumeric():
-        return float(val)
+        return float(val.replace(".", locale.localconv()['decimal_point']))
     else:
+        print ("> Error while converting " + val)
         return np.nan
 
 # Convert Data to new regions
