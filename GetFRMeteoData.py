@@ -250,7 +250,7 @@ def main():
     try:
         ds = convertRegionData(ds)
     except:
-        print("Impossible to convert dataset into new French Region.")
+        print("Impossible to convert dataset into new French Region. Error=", sys.exc_info()[0])
     print (f"Store results in {targetFolder + filename}")
     print ("Main()> Columns to write:", ds.columns)
     
