@@ -266,6 +266,7 @@ def main():
     for opt, arg in opts:
         if opt == '-h':
             usage()
+            return
         elif opt in ["-a"]:
             action = arg.strip()
         elif opt in ["-s"]:
