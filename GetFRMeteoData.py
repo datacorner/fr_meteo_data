@@ -198,6 +198,7 @@ def convertRegionData(dataset):
                                                      'corse' : 'Corse'
                                                     })
     
+    print ("convertRegionData> COnvert float data")
     # Convert in float to be able to group by
     ColumlToFloatConvert = ['TempMax_Deg',
                             'TempMin_Deg',
@@ -211,7 +212,7 @@ def convertRegionData(dataset):
     
     dataset['Dayduration_Min'] = dataset['Dayduration_hour'].apply(convTimeInMinute)
     
-    print ("convertRegionData> Group old region and mean data")
+    
     print ("convertRegionData> Columns converted before grouping:", dataset.columns)
     # Now need to group the identical days (coming from the same region) to ensure no duplicates
     dataset = dataset.groupby(['region', 'day'], dropna=True).mean()
