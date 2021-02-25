@@ -54,3 +54,8 @@ The result is stored in a csv file (in the input folder) with that format:
 * <B>region:</b> Region 
 * <B>day:</b> Day in format YYYY/MM/DD 
 
+# Datasets
+
+The Meteo datasets can be downloaded from the /data directory. This directory is then splitted by Region and time range. 
+Currently only France by year is available. For France, you can find 2 kinds of files the old regions (prefix oldReg_*) and the new region breakdown (without prefix, starting by MeteoFR_*).
+
