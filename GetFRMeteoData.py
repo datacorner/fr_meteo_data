@@ -109,18 +109,28 @@ def get1RegionMeteoByDay(_region, _day):
 
 # Return the meteo data for 1 day for all region
 # _day : day to retrieve meteo (format YYYY/MM/DD)
-def getAllRegionByDay(_day):
+def getAllRegionByDay(_day, _userRegion):
   all_day_dataset = pd.DataFrame()
   print (f"Grab Meteo Data for {_day}")
   
   # Loop through all regions and get their meteo data per day
-  for region in regions:
+  if _userRegion == "":
+    # print (f"userRegion: <{_userRegion}>")
+    for region in regions:
     #print (".", end='')
+        try:
+            dataframe_region = get1RegionMeteoByDay(region, _day)
+            all_day_dataset = pd.concat([all_day_dataset, dataframe_region])
+        except:
+            print(f'Error while retreiving data for {region}, day {_day} | ', sys.exc_info()[0])    
+  else: 
+    # print (f"userRegion: <{_userRegion}>")
     try:
-        dataframe_region = get1RegionMeteoByDay(region, _day)
+        dataframe_region = get1RegionMeteoByDay(_userRegion, _day)
         all_day_dataset = pd.concat([all_day_dataset, dataframe_region])
     except:
-        print(f'Error while retreiving data for {region}, day {_day} | ', sys.exc_info()[0])    
+        print(f'Error while retreiving data for {region}, day {_day} | ', sys.exc_info()[0])  
+    
     
   # reformat dataset columns names
   all_day_dataset.columns = ['TempMax_Deg',
@@ -134,18 +144,18 @@ def getAllRegionByDay(_day):
   all_day_dataset['day'] = _day
   return all_day_dataset
 
-def GetMeteoData(_start, _End, _Folder):
+def GetMeteoData(_start, _End, _Folder, _userRegion):
     ds = pd.DataFrame()
     end_of_loop = False
     
     # Convert in datetime
     start = datetime.strptime(_start, "%Y/%m/%d")
     end = datetime.strptime(_End, "%Y/%m/%d")
-    filename = "MeteoFR_" + _start.replace('/', '-') + "_" + _End.replace('/', '-') + ".csv"
+    filename = "MeteoFR_region_" + _start.replace('/', '-') + "_" + _End.replace('/', '-') + ".csv"
     
     # Loop from start date to end
     while (start <= end):
-        ds_one_day = getAllRegionByDay(start.strftime("%Y/%m/%d"))
+        ds_one_day = getAllRegionByDay(start.strftime("%Y/%m/%d"), _userRegion)
         ds = pd.concat([ds, ds_one_day])
         start = start + timedelta(days=1)
     
@@ -166,7 +176,7 @@ def defaultFloat(val):
         return np.nan
 
 # Convert Data to new regions
-def convertRegionData(dataset):
+def convertRegionData(dataset, _userRegion):
     print ("Convert French Region with new ones")
     print ("convertRegionData> Columns to convert:", dataset.columns)
     
@@ -194,7 +204,8 @@ def convertRegionData(dataset):
                                                      'midi-pyrenees' : 'Occitanie',
                                                      'languedoc-roussillon' : 'Occitanie',
                                                      'provence-alpes-c-te-d-azur' : "Provence-Alpes-Côte d'Azur",
-                                                     'corse' : 'Corse'
+                                                     'corse' : 'Corse',
+                                                     _userRegion : _userRegion
                                                     })
     
     print ("convertRegionData> Convert float data")
@@ -210,8 +221,10 @@ def convertRegionData(dataset):
         #dataset[label] = dataset[label].astype(float, errors='ignore')
     
     print ("convertRegionData> Data converted in float")
-    dataset['Dayduration_Min'] = dataset['Dayduration_hour'].apply(convTimeInMinute)
-    
+    if _userRegion == "":
+        dataset['Dayduration_Min'] = dataset['Dayduration_hour'].apply(convTimeInMinute)
+    else:
+        dataset['Dayduration_Min'] = 0  
     print ("convertRegionData> Dayduration_Min converted in minutes, new columns set: ", dataset.columns)
     # Now need to group the identical days (coming from the same region) to ensure no duplicates
     dataset = dataset.groupby(['region', 'day'], dropna=True).mean()
@@ -221,44 +234,47 @@ def convertRegionData(dataset):
     return dataset
 
 # Launch data gathering
-def collectMeteoData(_starDate, _endDate, _targetFolder):
+def collectMeteoData(_starDate, _endDate, _targetFolder, _userRegion):
     print (f"Starting Date: <{_starDate}>")
     print (f"End Date Date: <{_endDate}>")
     print (f"Target Folder: <{_targetFolder}>")
+    print (f"User Region: <{_userRegion}>")
+
+    
     
     # Launch Meteo gathering
     try:
-        filename, ds = GetMeteoData(_starDate, _endDate, _targetFolder)
+        filename, ds = GetMeteoData(_starDate, _endDate, _targetFolder, _userRegion)
         print (f"Store results in {_targetFolder + filename}")
         ds.to_csv(_targetFolder + "oldReg_" + filename)
     except:
         print("> Error while gathering meteo data. Error raised: ", sys.exc_info()[0])
         
 # convert in new FR region
-def convertMeteoDataInNewFRRegions(_sourcefile, _targetfile):
+def convertMeteoDataInNewFRRegions(_userRegion, _sourcefile, _targetfile):
     print (f"Source file: <{_sourcefile}>")
     print (f"Target File: <{_targetfile}>")
     
     #try:
     dataset = pd.read_csv(_sourcefile)
-    dataset_result = convertRegionData(dataset)
+    dataset_result = convertRegionData(dataset, _userRegion)
     dataset_result.to_csv(_targetfile)
     #except:
     #    print("> Impossible to convert Meteo data into new French Region. Error raised: ", sys.exc_info()[0])
 
 def usage():
-    print ('Meteo Gathering Usage is GetFRMeteoData.py -a collect -s <Start Date> -e <End Date> -f <Target Folder>')
-    print ('Meteo Fr New Region conversion Usage is GetFRMeteoData.py -a convert -i <input file> -o <output file>')
+    print ('Meteo Gathering Usage is GetFRMeteoData.py -a collect -r <User Région overide : "région/city"> -s <Start Date> -e <End Date> -f <Target Folder>')
+    print ('Meteo Fr New Region conversion Usage is GetFRMeteoData.py -a convert -r <User Region overide : "région/city"> -i <input file> -o <output file>')
     
 # Main function
 def main():
     # Manage arguments
-    starDate, endDate, targetFolder, inFile, outFile = '', '', '', '', ''
+    userRegion, starDate, endDate, targetFolder, inFile, outFile = '', '', '', '', '', ''
     action = "collect" # by default collect data
     
     try:
         argv = sys.argv[1:]
-        opts, args = getopt.getopt(argv , "a:s:e:f:i:o:h")
+        opts, args = getopt.getopt(argv , "a:r:s:e:f:i:o:h")
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -269,6 +285,8 @@ def main():
             return
         elif opt in ["-a"]:
             action = arg.strip()
+        elif opt in ["-r"]:
+            userRegion = arg.strip()
         elif opt in ["-s"]:
             starDate = arg.strip()
         elif opt in ["-e"]:
@@ -281,11 +299,19 @@ def main():
             outFile = arg.strip()
             
     print (f"Action to launch: <{action}>")
+    
+    #if bool(userRegion):
+    #     # print (f"userRegion: <{userRegion}>")
+    #     pass
+    #else:
+    #    userRegion = "Default"
+    #    # print (f"userRegion: <{userRegion}>")
+        
     if (action.capitalize() == "collect".capitalize()):
-        collectMeteoData(starDate, endDate, targetFolder)
+        collectMeteoData(starDate, endDate, targetFolder, userRegion)
         
     elif (action.capitalize() == "convert".capitalize()):
-        convertMeteoDataInNewFRRegions(inFile, outFile)
+        convertMeteoDataInNewFRRegions(userRegion, inFile, outFile)
     
 
 if __name__ == "__main__":
